@@ -12,6 +12,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -159,22 +160,29 @@ public class Word2VecModel {
 			List<String> vocabs = new ArrayList<String>(vocabSize);
 			DoubleBuffer vectors = ByteBuffer.allocateDirect(vocabSize * layerSize * 8).asDoubleBuffer();
 
+			List<Byte> byteList = new ArrayList<Byte>();
 			long lastLogMessage = System.currentTimeMillis();
 			final float[] floats = new float[layerSize];
 			for (int lineno = 0; lineno < vocabSize; lineno++) {
 				// read vocab
 				sb.setLength(0);
-				c = (char) buffer.get();
-				while (c != ' ') {
+				byte ch = buffer.get();
+				while ((char)ch != ' ') {
 					// ignore newlines in front of words (some binary files have newline,
 					// some don't)
-					if (c != '\n') {
-						sb.append(c);
+					if ((char)ch != '\n') {
+						byteList.add(ch);
 					}
-					c = (char) buffer.get();
+					ch = buffer.get();
 				}
-				vocabs.add(sb.toString());
-
+				byte[] newTmpArr = new byte[byteList.size()];
+				for(int i = 0; i != byteList.size(); ++i){
+					newTmpArr[i] = byteList.get(i);
+				}
+				
+				vocabs.add(new String(newTmpArr, "utf-8"));
+				byteList.clear();
+				
 				// read vector
 				final FloatBuffer floatBuffer = buffer.asFloatBuffer();
 				floatBuffer.get(floats);
@@ -228,6 +236,7 @@ public class Word2VecModel {
 		final ByteBuffer buffer = ByteBuffer.allocate(4 * layerSize);
 		buffer.order(ByteOrder.LITTLE_ENDIAN);	// The C version uses this byte order.
 		for(int i = 0; i < vocab.size(); ++i) {
+			System.out.print(String.format("%s ", vocab.get(i)).getBytes(cs));
 			out.write(String.format("%s ", vocab.get(i)).getBytes(cs));
 
 			vectors.position(i * layerSize);
@@ -236,7 +245,7 @@ public class Word2VecModel {
 			for(int j = 0; j < layerSize; ++j)
 				buffer.putFloat((float)vector[j]);
 			out.write(buffer.array());
-
+			System.out.println(new String(buffer.array()));
 			out.write('\n');
 		}
 

@@ -29,10 +29,11 @@ class SkipGramModelTrainer extends NeuralNetworkTrainer {
 				String word = sentence.get(sentencePosition);
 				HuffmanNode huffmanNode = huffmanNodes.get(word);
 
-				for (int c = 0; c < layer1_size; c++)
+				for (int c = 0; c < layer1_size; c++){
 					neu1[c] = 0;
-				for (int c = 0; c < layer1_size; c++)
 					neu1e[c] = 0;
+				}
+					
 				nextRandom = incrementRandom(nextRandom);
 
 				int b = (int)(((nextRandom % window) + nextRandom) % window);
